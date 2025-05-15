@@ -1,0 +1,35 @@
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f4f6f8;
+  margin: 0;
+  padding: 0;
+}
+
+form {
+  max-width: 400px;
+  margin: 2rem auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+input, select, button {
+  display: block;
+  width: 100%;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+button {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #1565c0;
+}
