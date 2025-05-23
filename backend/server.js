@@ -36,11 +36,7 @@ const __dirname = path.dirname(__filename);
 
 
 
-app.use(express.static(path.join(__dirname, 'frontend_build')));
 
-app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, 'frontend_build', 'index.html'));
-});
 
 // Add upload routes
 import uploadRoutes from './routes/uploadRoutes.js';

@@ -1,20 +1,26 @@
 import React, { useState } from 'react';
+import { 
+  Container, Box, TextField, Button, Typography, Paper, 
+  CircularProgress, Alert, InputAdornment, IconButton 
+} from '@mui/material';
+import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import API from '../utils/api';
-import { saveToken, getRole } from '../utils/auth';
 import { useNavigate } from 'react-router-dom';
+import { saveToken, getToken, removeToken, getRole } from '../utils/auth';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const loginUser = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     // Basic validation
     if (!email || !password) {
       setError('Please enter both email and password');
@@ -24,18 +30,16 @@ function Login() {
 
     try {
       const { data } = await API.post('/auth/login', { email, password });
-      
       if (data && data.token) {
         saveToken(data.token);
         const role = getRole();
-        
+
         // Redirect based on user role
         if (role === 'Admin') navigate('/admin');
         else if (role === 'Student') navigate('/student');
         else if (role === 'Faculty') navigate('/faculty');
         else if (role === 'HOD') navigate('/hod');
         else {
-          // Handle unexpected role
           setError('Invalid user role. Please contact administrator.');
           removeToken();
         }
@@ -57,45 +61,98 @@ function Login() {
   };
 
   return (
-    <div className="login-container">
-      <form onSubmit={loginUser} className="login-form">
-        <h2>Login</h2>
-        
-        {error && <div className="error-message">{error}</div>}
-        
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input 
-            type="text" 
-            id="email"
-            placeholder="Email" 
-            value={email} 
-            onChange={e => setEmail(e.target.value)} 
-            disabled={loading}
-          />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input 
-            type="password" 
-            id="password"
-            placeholder="Password" 
-            value={password} 
-            onChange={e => setPassword(e.target.value)} 
-            disabled={loading}
-          />
-        </div>
-        
-        <button 
-          type="submit" 
-          className="login-btn" 
-          disabled={loading}
+    <Container component="main" maxWidth="xs">
+      <Box
+        sx={{
+          marginTop: 8,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <Paper 
+          elevation={6} 
+          sx={{ 
+            p: 4, 
+            width: '100%', 
+            borderRadius: 2,
+            background: 'linear-gradient(to right bottom, #ffffff, #f8f9fa)'
+          }}
         >
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
-    </div>
+          <Typography component="h1" variant="h4" align="center" gutterBottom sx={{ fontWeight: 600 }}>
+            Welcome Back
+          </Typography>
+          <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
+            Sign in to access your dashboard
+          </Typography>
+          
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          
+          <Box component="form" onSubmit={loginUser} noValidate>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label="Email Address"
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Email color="primary" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              id="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Lock color="primary" />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: 2 }}
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
   );
 }
 
