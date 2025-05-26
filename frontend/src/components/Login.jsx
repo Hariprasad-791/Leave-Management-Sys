@@ -6,7 +6,7 @@ import {
 import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import API from '../utils/api';
 import { useNavigate } from 'react-router-dom';
-import { saveToken, getToken, removeToken, getRole } from '../utils/auth';
+import { saveToken, removeToken, getRole } from '../utils/auth';
 
 function Login() {
   const [email, setEmail] = useState('');

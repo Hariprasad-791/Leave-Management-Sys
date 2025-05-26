@@ -20,7 +20,7 @@ WORKDIR /app
 # Install backend dependencies and run tests
 COPY backend/package*.json ./backend/
 WORKDIR /app/backend
-RUN npm install && npm test || echo "No backend tests found"
+RUN npm install --ignore-scripts && npm test || echo "No backend tests found"
 
 # Copy backend source code
 COPY backend/ ./

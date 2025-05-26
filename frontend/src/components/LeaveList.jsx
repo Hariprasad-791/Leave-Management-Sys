@@ -8,10 +8,11 @@ import {
 } from '@mui/material';
 
 import { 
-  CheckCircle, Cancel, RemoveRedEye, Comment, 
+  CheckCircle, Cancel, RemoveRedEye,  
   Assignment, Close, Refresh
 } from '@mui/icons-material';
 import API from '../utils/api';
+import PropTypes from 'prop-types';
 
 const LeaveList = ({ type }) => {
   const [leaves, setLeaves] = useState([]);
@@ -348,5 +349,7 @@ const LeaveList = ({ type }) => {
     </Paper>
   );
 };
-
+LeaveList.propTypes = {
+  type: PropTypes.string.isRequired, // or PropTypes.oneOf([...]) if you know the valid types
+};
 export default LeaveList;
