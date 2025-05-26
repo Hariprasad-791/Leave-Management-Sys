@@ -3,6 +3,12 @@ body {
   background-color: #f4f6f8;
   margin: 0;
   padding: 0;
+    font-family: 'Poppins', sans-serif;
+  background-color: var(--background-light);
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+  line-height: 1.6;
 }
 
 form {
@@ -25,14 +31,7 @@ form {
   --transition-speed: 0.3s;
 }
 
-body {
-  font-family: 'Poppins', sans-serif;
-  background-color: var(--background-light);
-  margin: 0;
-  padding: 0;
-  color: var(--text-primary);
-  line-height: 1.6;
-}
+
 
 .page-container {
   max-width: 1200px;

@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { 
   Person, School, SupervisorAccount, 
-  Engineering, Dashboard as DashboardIcon 
+  Engineering
 } from '@mui/icons-material';
 import Navbar from '../components/Navbar';
 import Signup from '../components/Signup';
@@ -89,7 +89,7 @@ function AdminDashboard() {
       
       <Box component="footer" sx={{ py: 3, px: 2, mt: 'auto', bgcolor: 'background.paper' }}>
         <Typography variant="body2" color="text.secondary" align="center">
-          © {new Date().getFullYear()} Leave Management System
+           {new Date().getFullYear()} Leave Management System
         </Typography>
       </Box>
     </Box>

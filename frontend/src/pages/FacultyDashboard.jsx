@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Container, Typography, Box, Paper, Grid, 
-  Card, CardContent, Tabs, Tab, Divider,
+  Card, CardContent, Tabs, Tab,
   CircularProgress
 } from '@mui/material';
 import { 
-  Add, ListAlt, School,
-  Dashboard as DashboardIcon 
+  Add, ListAlt, School
 } from '@mui/icons-material';
 import Navbar from '../components/Navbar';
 import LeaveForm from '../components/LeaveForm';
@@ -115,23 +114,23 @@ const FacultyDashboard = () => {
             <Tab icon={<ListAlt />} label="My Leaves" />
           </Tabs>
           
-          <Box sx={{ p: 3 }}>
-            {tabValue === 0 ? (
-              <LeaveForm />
-            ) : tabValue === 1 ? (
-              <LeaveList type="proctor" />
-            ) : (
-              <LeaveList type="student" />
-            )}
-          </Box>
-        </Paper>
-      </Container>
-      
-      <Box component="footer" sx={{ py: 3, px: 2, mt: 'auto', bgcolor: 'background.paper' }}>
-        <Typography variant="body2" color="text.secondary" align="center">
-          © {new Date().getFullYear()} Leave Management System
-        </Typography>
-      </Box>
+         <Box sx={{ p: 3 }}>
+  {(() => {
+    if (tabValue === 0) return <LeaveForm />;
+    if (tabValue === 1) return <LeaveList type="proctor" />;
+    return <LeaveList type="student" />;
+  })()}
+</Box>
+
+</Paper>
+</Container>
+
+<Box component="footer" sx={{ py: 3, px: 2, mt: 'auto', bgcolor: 'background.paper' }}>
+  <Typography variant="body2" color="text.secondary" align="center">
+    &copy; {new Date().getFullYear()} Leave Management System
+  </Typography>
+</Box>
+
     </Box>
   );
 };

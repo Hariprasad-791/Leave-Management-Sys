@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { AppBar, Toolbar, Typography, Button, Avatar, Menu, MenuItem, IconButton, Box } from '@mui/material';
-import { AccountCircle, ExitToApp, Dashboard } from '@mui/icons-material';
+import { AppBar, Toolbar, Typography,  Avatar, Menu, MenuItem, IconButton, Box } from '@mui/material';
+import {  ExitToApp, Dashboard } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { getRole, removeToken } from '../utils/auth';
 

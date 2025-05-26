@@ -14,20 +14,22 @@ RUN npm run build
 # ---------- BACKEND ----------
 FROM node:18-alpine
 
+# Set working directory
 WORKDIR /app
 
 # Install backend dependencies and run tests
 COPY backend/package*.json ./backend/
-RUN cd backend && npm install && npm test || echo "No backend tests found"
+WORKDIR /app/backend
+RUN npm install && npm test || echo "No backend tests found"
 
-# Copy backend code
-COPY backend/ ./backend/
+# Copy backend source code
+COPY backend/ ./
+
+# Set working directory back to /app (optional if needed)
+WORKDIR /app
 
 # Copy built frontend from previous stage
 COPY --from=frontend-build /app/frontend/build ./frontend_build
 
 # Expose backend port
 EXPOSE 5000
-
-# Start backend server
-CMD ["node", "backend/server.js"]

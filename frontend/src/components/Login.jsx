@@ -28,34 +28,49 @@ function Login() {
       return;
     }
 
-    try {
-      const { data } = await API.post('/auth/login', { email, password });
-      if (data && data.token) {
-        saveToken(data.token);
-        const role = getRole();
+   try {
+  const { data } = await API.post('/auth/login', { email, password });
 
-        // Redirect based on user role
-        if (role === 'Admin') navigate('/admin');
-        else if (role === 'Student') navigate('/student');
-        else if (role === 'Faculty') navigate('/faculty');
-        else if (role === 'HOD') navigate('/hod');
-        else {
-          setError('Invalid user role. Please contact administrator.');
-          removeToken();
-        }
-      } else {
-        setError('Login failed. Invalid response from server.');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      if (err.response && err.response.status === 400) {
-        setError('Invalid email or password. Please try again.');
-      } else if (err.response && err.response.status === 401) {
-        setError('Unauthorized access. Please check your credentials.');
-      } else {
-        setError('Login failed. Please try again later.');
-      }
-    } finally {
+  if (data?.token) {
+    saveToken(data.token);
+    const role = getRole();
+
+    // Redirect based on user role
+    switch (role) {
+      case 'Admin':
+        navigate('/admin');
+        break;
+      case 'Student':
+        navigate('/student');
+        break;
+      case 'Faculty':
+        navigate('/faculty');
+        break;
+      case 'HOD':
+        navigate('/hod');
+        break;
+      default:
+        setError('Invalid user role. Please contact administrator.');
+        removeToken();
+        break;
+    }
+  } else {
+    setError('Login failed. Invalid response from server.');
+  }
+} catch (err) {
+  console.error('Login error:', err);
+
+  const status = err?.response?.status;
+
+  if (status === 400) {
+    setError('Invalid email or password. Please try again.');
+  } else if (status === 401) {
+    setError('Unauthorized access. Please check your credentials.');
+  } else {
+    setError('Login failed. Please try again later.');
+  }
+}
+ finally {
       setLoading(false);
     }
   };

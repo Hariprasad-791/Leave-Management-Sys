@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Container, Grid, Paper, Typography, Box, Card, CardContent, 
-  Divider, CircularProgress, Tabs, Tab
-} from '@mui/material';
-import { Assignment, History, Add } from '@mui/icons-material';
+  CircularProgress, Tabs, Tab
+} from '@mui/material'; // Removed Divider
+import { History, Add } from '@mui/icons-material'; // Removed Assignment
 import Navbar from '../components/Navbar';
 import LeaveForm from '../components/LeaveForm';
 import LeaveList from '../components/LeaveList';
@@ -18,7 +18,7 @@ const StudentDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
-  
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -30,9 +30,10 @@ const StudentDashboard = () => {
         setLoading(false);
       }
     };
-    
+
     fetchStats();
   }, []);
+
   
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -142,9 +143,10 @@ const StudentDashboard = () => {
       </Container>
       
       <Box component="footer" sx={{ py: 3, px: 2, mt: 'auto', bgcolor: 'background.paper' }}>
-        <Typography variant="body2" color="text.secondary" align="center">
-          © {new Date().getFullYear()} Leave Management System
-        </Typography>
+      <Typography variant="body2" color="text.secondary" align="center">
+  &copy; {new Date().getFullYear()} Leave Management System
+</Typography>
+
       </Box>
     </Box>
   );
