@@ -1,154 +1,47 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, Grid, Paper, Typography, Box, Card, CardContent, 
-  CircularProgress, Tabs, Tab
-} from '@mui/material'; // Removed Divider
-import { History, Add } from '@mui/icons-material'; // Removed Assignment
-import Navbar from '../components/Navbar';
+import { Grid, Tabs, Tab, Paper, CircularProgress } from '@mui/material';
+import { Add, ListAlt } from '@mui/icons-material';
+import DashboardLayout from '../components/DashboardLayout';
+import StatCard from '../components/StatCard';
 import LeaveForm from '../components/LeaveForm';
 import LeaveList from '../components/LeaveList';
 import API from '../utils/api';
 
 const StudentDashboard = () => {
-  const [stats, setStats] = useState({
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-    total: 0
-  });
-  const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
+  const [stats, setStats] = useState({ leaves: 0 });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await API.get('/leave/stats');
-        setStats(response.data);
+        const res = await API.get('/leave/status');
+        setStats({ leaves: res.data.length });
       } catch (error) {
-        console.error('Error fetching stats:', error);
+        console.error('Error fetching student leave stats:', error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchStats();
   }, []);
 
-  
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
-  
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Navbar />
-      
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
-          Student Dashboard
-        </Typography>
-        
-        {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card elevation={3} sx={{ borderRadius: 2, height: '100%' }}>
-              <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                  Total Leaves
-                </Typography>
-                {loading ? (
-                  <CircularProgress size={24} />
-                ) : (
-                  <Typography variant="h3" component="div" sx={{ fontWeight: 700 }}>
-                    {stats.total}
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} sm={6} md={3}>
-            <Card elevation={3} sx={{ borderRadius: 2, height: '100%', bgcolor: '#e3f2fd' }}>
-              <CardContent>
-                <Typography color="primary" gutterBottom>
-                  Pending
-                </Typography>
-                {loading ? (
-                  <CircularProgress size={24} />
-                ) : (
-                  <Typography variant="h3" component="div" color="primary" sx={{ fontWeight: 700 }}>
-                    {stats.pending}
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} sm={6} md={3}>
-            <Card elevation={3} sx={{ borderRadius: 2, height: '100%', bgcolor: '#e8f5e9' }}>
-              <CardContent>
-                <Typography color="success.main" gutterBottom>
-                  Approved
-                </Typography>
-                {loading ? (
-                  <CircularProgress size={24} />
-                ) : (
-                  <Typography variant="h3" component="div" color="success.main" sx={{ fontWeight: 700 }}>
-                    {stats.approved}
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} sm={6} md={3}>
-            <Card elevation={3} sx={{ borderRadius: 2, height: '100%', bgcolor: '#ffebee' }}>
-              <CardContent>
-                <Typography color="error" gutterBottom>
-                  Rejected
-                </Typography>
-                {loading ? (
-                  <CircularProgress size={24} />
-                ) : (
-                  <Typography variant="h3" component="div" color="error" sx={{ fontWeight: 700 }}>
-                    {stats.rejected}
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-        
-        {/* Tabs for Leave Form and Leave List */}
-        <Paper elevation={3} sx={{ borderRadius: 2 }}>
-          <Tabs 
-            value={tabValue} 
-            onChange={handleTabChange}
-            variant="fullWidth"
-            indicatorColor="primary"
-            textColor="primary"
-          >
-            <Tab icon={<Add />} label="Apply for Leave" />
-            <Tab icon={<History />} label="My Leave History" />
-          </Tabs>
-          
-          <Box sx={{ p: 3 }}>
-            {tabValue === 0 ? (
-              <LeaveForm />
-            ) : (
-              <LeaveList type="student" />
-            )}
-          </Box>
-        </Paper>
-      </Container>
-      
-      <Box component="footer" sx={{ py: 3, px: 2, mt: 'auto', bgcolor: 'background.paper' }}>
-      <Typography variant="body2" color="text.secondary" align="center">
-  &copy; {new Date().getFullYear()} Leave Management System
-</Typography>
+  const handleTabChange = (e, newValue) => setTabValue(newValue);
 
-      </Box>
-    </Box>
+  return (
+    <DashboardLayout title="Student Dashboard">
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={12}><StatCard icon={<ListAlt sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />} title="Total Leaves Applied" value={loading ? <CircularProgress size={24} /> : stats.leaves} /></Grid>
+      </Grid>
+      <Paper elevation={3} sx={{ borderRadius: 2 }}>
+        <Tabs value={tabValue} onChange={handleTabChange} variant="fullWidth" indicatorColor="primary" textColor="primary">
+          <Tab icon={<Add />} label="Apply for Leave" />
+          <Tab icon={<ListAlt />} label="My Leave History" />
+        </Tabs>
+        {tabValue === 0 && <LeaveForm />}
+        {tabValue === 1 && <LeaveList type="status" />}
+      </Paper>
+    </DashboardLayout>
   );
 };
 

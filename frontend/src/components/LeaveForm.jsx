@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  Paper, Typography, TextField, Button, Box, 
-  Alert, Grid, CircularProgress, Snackbar 
+import {
+  Paper, Typography, TextField, Button, Box,
+  Alert, Grid, CircularProgress, Snackbar
 } from '@mui/material';
 import { CloudUpload, Send } from '@mui/icons-material';
 import API from '../utils/api';
@@ -14,7 +14,7 @@ function LeaveForm() {
     toDate: '',
     document: null
   });
-  
+
   const [fileName, setFileName] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -34,13 +34,13 @@ function LeaveForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([key, val]) => {
         if (val) fd.append(key, val);
       });
-      
+
       await API.post('/leave/submit', fd);
       setSuccess(true);
       setForm({
@@ -63,9 +63,9 @@ function LeaveForm() {
       <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
         Apply for Leave
       </Typography>
-      
+
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      
+
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <Grid container spacing={2}>
           <Grid item xs={12}>
@@ -80,7 +80,7 @@ function LeaveForm() {
               placeholder="E.g., Medical Leave, Family Emergency"
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -95,7 +95,7 @@ function LeaveForm() {
               placeholder="Please provide details about your leave request"
             />
           </Grid>
-          
+
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
@@ -109,7 +109,7 @@ function LeaveForm() {
               variant="outlined"
             />
           </Grid>
-          
+
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
@@ -123,7 +123,7 @@ function LeaveForm() {
               variant="outlined"
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <Button
               component="label"
@@ -132,7 +132,7 @@ function LeaveForm() {
               sx={{ mt: 1 }}
               fullWidth
             >
-              Upload Supporting Document
+              <span>Upload Supporting Document</span>
               <input
                 type="file"
                 name="document"
@@ -146,7 +146,7 @@ function LeaveForm() {
               </Typography>
             )}
           </Grid>
-          
+
           <Grid item xs={12}>
             <Button
               type="submit"
@@ -161,7 +161,7 @@ function LeaveForm() {
           </Grid>
         </Grid>
       </Box>
-      
+
       <Snackbar
         open={success}
         autoHideDuration={6000}
