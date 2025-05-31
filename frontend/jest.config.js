@@ -1,9 +1,6 @@
 module.exports = {
-  testEnvironment: 'jsdom',
+ testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
-  moduleNameMapping: {
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
-  },
   collectCoverageFrom: [
     'src/**/*.{js,jsx}',
     '!src/index.js',
@@ -13,6 +10,7 @@ module.exports = {
     '!src/**/__tests__/**',
   ],
   coverageReporters: ['text', 'lcov', 'html'],
+  coverageDirectory: 'coverage',
   testTimeout: 10000,
   clearMocks: true,
   resetMocks: true,
