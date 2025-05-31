@@ -1,14 +1,18 @@
 import User from '../models/User.js';
 
 // Create user (Admin only)
+// Create a new user
 export const createUser = async (req, res) => {
   const { name, email, password, role, department } = req.body;
+
   try {
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser = new User({
       name,
       email,
@@ -16,10 +20,13 @@ export const createUser = async (req, res) => {
       role,
       department,
     });
-    await newUser.save();
-    res.status(201).json(newUser);
-  } catch (err) {
-    res.status(500).json({ message: 'Error creating user' });
+
+    const savedUser = await newUser.save();
+
+    res.status(201).json(savedUser);
+  } catch (error) {
+    console.error('Error creating user:', error); // ✅ Log error for debugging
+    res.status(500).json({ message: 'Internal server error while creating user' });
   }
 };
 

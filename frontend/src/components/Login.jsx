@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  Container, Box, TextField, Button, Typography, Paper, 
-  CircularProgress, Alert, InputAdornment, IconButton 
+import {
+  Container, Box, TextField, Button, Typography, Paper,
+  CircularProgress, Alert, InputAdornment, IconButton
 } from '@mui/material';
 import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import API from '../utils/api';
@@ -21,56 +21,52 @@ function Login() {
     setError('');
     setLoading(true);
 
-    // Basic validation
     if (!email || !password) {
       setError('Please enter both email and password');
       setLoading(false);
       return;
     }
 
-   try {
-  const { data } = await API.post('/auth/login', { email, password });
+    try {
+      const { data } = await API.post('/auth/login', { email, password });
 
-  if (data?.token) {
-    saveToken(data.token);
-    const role = getRole();
+      if (data?.token) {
+        saveToken(data.token);
+        const role = getRole();
 
-    // Redirect based on user role
-    switch (role) {
-      case 'Admin':
-        navigate('/admin');
-        break;
-      case 'Student':
-        navigate('/student');
-        break;
-      case 'Faculty':
-        navigate('/faculty');
-        break;
-      case 'HOD':
-        navigate('/hod');
-        break;
-      default:
-        setError('Invalid user role. Please contact administrator.');
-        removeToken();
-        break;
-    }
-  } else {
-    setError('Login failed. Invalid response from server.');
-  }
-} catch (err) {
-  console.error('Login error:', err);
+        switch (role) {
+          case 'Admin':
+            navigate('/admin');
+            break;
+          case 'Student':
+            navigate('/student');
+            break;
+          case 'Faculty':
+            navigate('/faculty');
+            break;
+          case 'HOD':
+            navigate('/hod');
+            break;
+          default:
+            setError('Invalid user role. Please contact administrator.');
+            removeToken();
+            break;
+        }
+      } else {
+        setError('Login failed. Invalid response from server.');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      const status = err?.response?.status;
 
-  const status = err?.response?.status;
-
-  if (status === 400) {
-    setError('Invalid email or password. Please try again.');
-  } else if (status === 401) {
-    setError('Unauthorized access. Please check your credentials.');
-  } else {
-    setError('Login failed. Please try again later.');
-  }
-}
- finally {
+      if (status === 400) {
+        setError('Invalid email or password. Please try again.');
+      } else if (status === 401) {
+        setError('Unauthorized access. Please check your credentials.');
+      } else {
+        setError('Login failed. Please try again later.');
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -85,11 +81,11 @@ function Login() {
           alignItems: 'center',
         }}
       >
-        <Paper 
-          elevation={6} 
-          sx={{ 
-            p: 4, 
-            width: '100%', 
+        <Paper
+          elevation={6}
+          sx={{
+            p: 4,
+            width: '100%',
             borderRadius: 2,
             background: 'linear-gradient(to right bottom, #ffffff, #f8f9fa)'
           }}
@@ -100,9 +96,9 @@ function Login() {
           <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
             Sign in to access your dashboard
           </Typography>
-          
+
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          
+
           <Box component="form" onSubmit={loginUser} noValidate>
             <TextField
               margin="normal"
@@ -121,7 +117,7 @@ function Login() {
                   <InputAdornment position="start">
                     <Email color="primary" />
                   </InputAdornment>
-                ),
+                )
               }}
             />
             <TextField
@@ -152,7 +148,7 @@ function Login() {
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
-                ),
+                )
               }}
             />
             <Button

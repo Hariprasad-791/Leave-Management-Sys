@@ -1,26 +1,32 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
 
-// Middleware to protect routes
-export const authMiddleware = async (req, res, next) => {
-  const token = req.header('Authorization');
+// ✅ Removed unused `User` import
+
+// Middleware to protect routes using Bearer token in Authorization header
+export const authMiddleware = (req, res, next) => {
+  const token = req.headers?.authorization?.split(' ')[1]; // ✅ Uses optional chaining
+
   if (!token) {
     return res.status(401).json({ message: 'Authorization denied' });
   }
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.id; // Attach user ID to request
-    req.role = decoded.role; // Attach user role to request
+    req.userId = decoded.id;
+    req.role = decoded.role;
     next();
-  } catch (err) {
-    res.status(401).json({ message: 'Invalid token' });
+  } catch {
+    // ✅ No variable if not used, cleaner handling
+    return res.status(401).json({ message: 'Invalid token' });
   }
 };
+
+// Duplicate protection middleware (can be refactored into one with authMiddleware)
 export const protect = (req, res, next) => {
-  let token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+  const token = req.headers?.authorization?.split(' ')[1]; // ✅ Optional chaining
 
   if (!token) {
-    return res.status(401).json({ message: 'Not authorized nor' });
+    return res.status(401).json({ message: 'Not authorized' });
   }
 
   try {
@@ -28,12 +34,16 @@ export const protect = (req, res, next) => {
     req.userId = decoded.userId;
     req.role = decoded.role;
     next();
-  } catch (error) {
-    res.status(401).json({ message: 'Not authorized try' });
+  } catch {
+    return res.status(401).json({ message: 'Invalid token' });
   }
 };
-export const isHOD = (req, res, next) => {
-  if (req.role === 'HOD') next();
-  else res.status(403).json({ message: 'Only HODs can access this' });
-};
 
+// Role-based access middleware for HOD
+export const isHOD = (req, res, next) => {
+  if (req.role === 'HOD') {
+    next();
+  } else {
+    res.status(403).json({ message: 'Only HODs can access this' });
+  }
+};

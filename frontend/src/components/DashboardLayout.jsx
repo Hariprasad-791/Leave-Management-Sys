@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Container, Typography, Box } from '@mui/material';
 import Navbar from './Navbar';
 
@@ -13,5 +14,11 @@ const DashboardLayout = ({ title, children }) => (
     </Container>
   </Box>
 );
+
+// ✅ Add prop validation
+DashboardLayout.propTypes = {
+  title: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+};
 
 export default DashboardLayout;

@@ -27,8 +27,8 @@ export const submitLeaveRequest = async (req, res) => {
       documentUrl: req.file?.path || null,
       isFacultyLeave: user.role === 'Faculty',
       proctor: user.role === 'Student'
-  ? (user.substituteProctor || user.proctor)
-  : null,
+        ? (user.substituteProctor || user.proctor)
+        : null,
       department: user.department,
     });
 
@@ -41,7 +41,43 @@ export const submitLeaveRequest = async (req, res) => {
 };
 
 
-// BACKEND: Approve Leave (controllers/leaveController.js)
+// Helper: Update leave status based on approvals
+const updateLeaveStatus = (leave, approvalStatus) => {
+  if (approvalStatus === 'Rejected') {
+    leave.status = 'Rejected';
+    return;
+  }
+
+  if (leave.isFacultyLeave && leave.hodApproval) {
+    leave.status = 'Approved';
+  } else if (leave.proctorApproval && leave.hodApproval) {
+    leave.status = 'Approved';
+  } else {
+    leave.status = 'Pending';
+  }
+};
+
+// Helper: Assign substitute proctor to faculty and their students
+const assignSubstituteProctor = async (leave, substituteProctorId) => {
+  if (!substituteProctorId) {
+    throw new Error('Substitute proctor is required for faculty leave');
+  }
+
+  leave.substituteProctor = substituteProctorId;
+
+  const facultyUser = await User.findById(leave.student);
+  if (facultyUser && facultyUser.role === 'Faculty') {
+    facultyUser.substituteProctor = substituteProctorId;
+    await facultyUser.save();
+
+    const students = await User.find({ proctor: facultyUser._id });
+    for (const student of students) {
+      student.substituteProctor = substituteProctorId;
+      await student.save();
+    }
+  }
+};
+
 export const approveLeaveRequest = async (req, res) => {
   try {
     const {
@@ -54,81 +90,43 @@ export const approveLeaveRequest = async (req, res) => {
 
     const user = await User.findById(req.userId);
     const leave = await Leave.findById(leaveId);
-
     if (!leave) return res.status(404).json({ message: 'Leave not found' });
 
-    // Faculty approval (Proctor)
     if (user.role === 'Faculty') {
+      // Faculty (Proctor) approval
       leave.proctorApproval = approvalStatus === 'Approved';
       leave.comments = comments || '';
-    }
-
-    // HOD approval
-    else if (user.role === 'HOD') {
-      // For student leaves, ensure proctor has approved first
+    } else if (user.role === 'HOD') {
+      // HOD approval for student leaves requires prior proctor approval
       if (!leave.isFacultyLeave && !leave.proctorApproval) {
-        return res
-          .status(400)
-          .json({ message: 'Proctor must approve the leave first.' });
+        return res.status(400).json({ message: 'Proctor must approve the leave first.' });
       }
 
       leave.hodApproval = approvalStatus === 'Approved';
       leave.comments = comments || '';
       leave.rejectionReason = rejectionReason || '';
 
-      // For faculty leave, assign substitute proctor
-         // ✅ Set substituteProctor on the faculty's own user record
-if (leave.isFacultyLeave && leave.hodApproval === true) {
-  if (!substituteProctorId) {
-    return res
-      .status(400)
-      .json({ message: 'Substitute proctor is required for faculty leave' });
-  }
-
-  leave.substituteProctor = substituteProctorId;
-
-  // ✅ Update the faculty's own user document
-  const facultyUser = await User.findById(leave.student); // leave.student holds faculty _id in this case
-  if (facultyUser && facultyUser.role === 'Faculty') {
-    facultyUser.substituteProctor = substituteProctorId;
-    await facultyUser.save();
-  }
-
-  // ✅ Assign substituteProctor to all students under this faculty
-  const students = await User.find({ proctor: facultyUser._id });
-  for (const student of students) {
-    student.substituteProctor = substituteProctorId;
-    await student.save();
-  }
-}
-
-    }
-
-    // Final leave status logic
-    if (approvalStatus === 'Rejected') {
-      leave.status = 'Rejected';
-    } else {
-      // Faculty leave only needs HOD approval
       if (leave.isFacultyLeave && leave.hodApproval) {
-        leave.status = 'Approved';
+        try {
+          await assignSubstituteProctor(leave, substituteProctorId);
+        } catch (error) {
+          return res.status(400).json({ message: error.message });
+        }
       }
-      // Student leave needs both proctor and HOD approvals
-      else if (leave.proctorApproval && leave.hodApproval) {
-        leave.status = 'Approved';
-      } else {
-        leave.status = 'Pending';
-      }
+    } else {
+      return res.status(403).json({ message: 'Unauthorized role' });
     }
+
+    updateLeaveStatus(leave, approvalStatus);
 
     await leave.save();
-    res.status(200).json({ message: `Leave ${approvalStatus}` });
 
+    res.status(200).json({ message: `Leave ${approvalStatus}` });
   } catch (err) {
     console.error('Error approving leave:', err);
     res.status(500).json({ message: 'Server error while approving leave' });
   }
 };
-
 
 // BACKEND: Revert Temporary Proctor (run on schedule or admin route)
 
@@ -238,52 +236,52 @@ export const rejectLeaveRequest = async (req, res) => {
 // controllers/leaveController.js
 // Update the getLeaveByFaculty function
 export const getLeaveByFaculty = async (req, res) => {
-    try {
-        const proctorId = req.userId;
-        const leaves = await Leave.find({
-            $or: [
-                { proctor: proctorId },
-                { substituteProctor: proctorId },
-            ]
-        }).populate({
-            path: 'student',
-            select: 'name email role department'
-        });
-        res.status(200).json(leaves);
-    } catch (err) {
-        console.error('Error fetching faculty leaves:', err);
-        res.status(500).json({ message: 'Server error while retrieving leaves' });
-    }
+  try {
+    const proctorId = req.userId;
+    const leaves = await Leave.find({
+      $or: [
+        { proctor: proctorId },
+        { substituteProctor: proctorId },
+      ]
+    }).populate({
+      path: 'student',
+      select: 'name email role department'
+    });
+    res.status(200).json(leaves);
+  } catch (err) {
+    console.error('Error fetching faculty leaves:', err);
+    res.status(500).json({ message: 'Server error while retrieving leaves' });
+  }
 };
 
 // Update the getLeavesByDepartment function
 export const getLeavesByDepartment = async (req, res) => {
-    try {
-        const user = await User.findById(req.userId);
-        if (!user || user.role !== 'HOD') {
-            return res.status(403).json({ message: 'Unauthorized' });
-        }
-        
-        const leaves = await Leave.find({
-            department: user.department,
-            $or: [
-                {
-                    proctorApproval: true,
-                },
-                {
-                    isFacultyLeave: true,
-                }
-            ],
-        }).populate({
-            path: 'student',
-            select: 'name email role department'
-        });
-        
-        res.json(leaves);
-    } catch (err) {
-        console.error('Error fetching department leaves:', err);
-        res.status(500).json({ message: 'Server error while retrieving leaves' });
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || user.role !== 'HOD') {
+      return res.status(403).json({ message: 'Unauthorized' });
     }
+
+    const leaves = await Leave.find({
+      department: user.department,
+      $or: [
+        {
+          proctorApproval: true,
+        },
+        {
+          isFacultyLeave: true,
+        }
+      ],
+    }).populate({
+      path: 'student',
+      select: 'name email role department'
+    });
+
+    res.json(leaves);
+  } catch (err) {
+    console.error('Error fetching department leaves:', err);
+    res.status(500).json({ message: 'Server error while retrieving leaves' });
+  }
 };
 
 
