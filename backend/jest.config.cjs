@@ -1,10 +1,12 @@
 module.exports = {
-  testEnvironment: 'node',
+   testEnvironment: 'node',
   collectCoverageFrom: [
     'controllers/**/*.js',
     'models/**/*.js',
     'routes/**/*.js',
   ],
+  coverageReporters: ['text', 'lcov', 'html'],
+  coverageDirectory: 'coverage',
   coverageThreshold: {
     global: {
       branches: 80,
