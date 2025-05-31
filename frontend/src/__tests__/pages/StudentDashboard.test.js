@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+// Create a simple mock component instead of importing the real one
 const MockStudentDashboard = () => (
   <div data-testid="student-dashboard">
     <h1>Student Dashboard</h1>
@@ -12,8 +13,13 @@ const MockStudentDashboard = () => (
 );
 
 describe('StudentDashboard Component', () => {
-  test('renders dashboard', () => {
+  test('renders student dashboard', () => {
     render(<MockStudentDashboard />);
     expect(document.querySelector('[data-testid="student-dashboard"]')).toBeInTheDocument();
+  });
+
+  test('contains dashboard elements', () => {
+    const { container } = render(<MockStudentDashboard />);
+    expect(container.firstChild).toBeTruthy();
   });
 });

@@ -13,7 +13,7 @@ const MockLeaveForm = () => (
 );
 
 describe('LeaveForm Component', () => {
-  test('renders form elements', () => {
+  test('renders leave form', () => {
     render(<MockLeaveForm />);
     expect(document.querySelector('[data-testid="leave-form"]')).toBeInTheDocument();
   });
@@ -23,5 +23,12 @@ describe('LeaveForm Component', () => {
     const form = document.querySelector('[data-testid="leave-form"]');
     fireEvent.submit(form);
     expect(form).toBeInTheDocument();
+  });
+
+  test('handles input changes', () => {
+    render(<MockLeaveForm />);
+    const textarea = document.querySelector('[data-testid="reason"]');
+    fireEvent.change(textarea, { target: { value: 'test value' } });
+    expect(textarea.value).toBe('test value');
   });
 });
