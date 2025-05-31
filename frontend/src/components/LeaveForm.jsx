@@ -104,8 +104,8 @@ function LeaveForm() {
               type="date"
               value={form.fromDate}
               onChange={handleChange}
+
               required
-              InputLabelProps={{ shrink: true }}
               variant="outlined"
             />
           </Grid>
@@ -118,8 +118,8 @@ function LeaveForm() {
               type="date"
               value={form.toDate}
               onChange={handleChange}
+
               required
-              InputLabelProps={{ shrink: true }}
               variant="outlined"
             />
           </Grid>

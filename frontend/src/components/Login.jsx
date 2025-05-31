@@ -7,6 +7,10 @@ import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import API from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { saveToken, removeToken, getRole } from '../utils/auth';
+import { TextField, InputAdornment } from '@mui/material';
+import EmailIcon from '@mui/icons-material/Email';
+import { IconButton } from '@mui/material';
+import LockIcon from '@mui/icons-material/Lock';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -112,14 +116,17 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email color="primary" />
-                  </InputAdornment>
-                )
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon color="primary" />
+                    </InputAdornment>
+                  )
+                }
               }}
             />
+
             <TextField
               margin="normal"
               required
@@ -132,23 +139,25 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock color="primary" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                )
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon color="primary" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label="toggle password visibility"
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }
               }}
             />
             <Button

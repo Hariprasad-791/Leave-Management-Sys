@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Paper, Typography, Table, TableBody, TableCell, TableContainer, 
+import {
+  Paper, Typography, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Chip, Button, TextField, Select, MenuItem,
   FormControl, InputLabel, CircularProgress, Box, Alert, Dialog,
   DialogTitle, DialogContent, DialogActions, IconButton, Tooltip,
   TablePagination, LinearProgress, Grid
 } from '@mui/material';
 
-import { 
-  CheckCircle, Cancel, RemoveRedEye,  
+import {
+  CheckCircle, Cancel, RemoveRedEye,
   Assignment, Close, Refresh
 } from '@mui/icons-material';
 import API from '../utils/api';
@@ -83,7 +83,7 @@ const LeaveList = ({ type }) => {
       }
 
       await API.post('/leave/approve', payload);
-      
+
       // Refresh the leave list instead of full page reload
       const updatedLeaves = leaves.map(leave => {
         if (leave._id === leaveId) {
@@ -93,7 +93,7 @@ const LeaveList = ({ type }) => {
       });
       setLeaves(updatedLeaves);
       setOpenDialog(false);
-      
+
     } catch (err) {
       setError(err.response?.data?.message || 'Action failed');
     }
@@ -105,7 +105,7 @@ const LeaveList = ({ type }) => {
   };
 
   const getStatusChip = (status) => {
-    switch(status) {
+    switch (status) {
       case 'Approved':
         return <Chip label="Approved" color="success" size="small" icon={<CheckCircle />} />;
       case 'Rejected':
@@ -144,10 +144,10 @@ const LeaveList = ({ type }) => {
           </IconButton>
         </Tooltip>
       </Box>
-      
+
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {refreshing && <LinearProgress sx={{ mb: 2 }} />}
-      
+
       {leaves.length === 0 ? (
         <Alert severity="info">No leave requests found.</Alert>
       ) : (
@@ -167,28 +167,28 @@ const LeaveList = ({ type }) => {
                 {leaves
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((leave) => (
-                  <TableRow key={leave._id} hover>
-                    <TableCell>{leave.title}</TableCell>
-                    <TableCell>{new Date(leave.fromDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(leave.toDate).toLocaleDateString()}</TableCell>
-                    <TableCell>{getStatusChip(leave.status)}</TableCell>
-                    <TableCell>
-                      <Tooltip title="View Details">
-                        <IconButton 
-                          size="small" 
-                          color="primary"
-                          onClick={() => openLeaveDetails(leave)}
-                        >
-                          <RemoveRedEye />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                    <TableRow key={leave._id} hover>
+                      <TableCell>{leave.title}</TableCell>
+                      <TableCell>{new Date(leave.fromDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(leave.toDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{getStatusChip(leave.status)}</TableCell>
+                      <TableCell>
+                        <Tooltip title="View Details">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => openLeaveDetails(leave)}
+                          >
+                            <RemoveRedEye />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </TableContainer>
-          
+
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
@@ -200,10 +200,10 @@ const LeaveList = ({ type }) => {
           />
         </>
       )}
-      
+
       {/* Leave Details Dialog */}
-      <Dialog 
-        open={openDialog} 
+      <Dialog
+        open={openDialog}
         onClose={() => setOpenDialog(false)}
         maxWidth="md"
         fullWidth
@@ -223,42 +223,42 @@ const LeaveList = ({ type }) => {
                   <Typography variant="body1" gutterBottom>
                     {selectedLeave.student?.name || 'N/A'} ({selectedLeave.student?.role || 'N/A'})
                   </Typography>
-                  
+
                   <Typography variant="subtitle2" color="text.secondary">Email</Typography>
                   <Typography variant="body1" gutterBottom>
                     {selectedLeave.student?.email || 'N/A'}
                   </Typography>
-                  
+
                   <Typography variant="subtitle2" color="text.secondary">Department</Typography>
                   <Typography variant="body1" gutterBottom>
                     {selectedLeave.department || 'N/A'}
                   </Typography>
                 </Grid>
-                
+
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle2" color="text.secondary">From Date</Typography>
                   <Typography variant="body1" gutterBottom>
                     {new Date(selectedLeave.fromDate).toLocaleDateString()}
                   </Typography>
-                  
+
                   <Typography variant="subtitle2" color="text.secondary">To Date</Typography>
                   <Typography variant="body1" gutterBottom>
                     {new Date(selectedLeave.toDate).toLocaleDateString()}
                   </Typography>
-                  
+
                   <Typography variant="subtitle2" color="text.secondary">Status</Typography>
                   <Typography variant="body1" gutterBottom>
                     {getStatusChip(selectedLeave.status)}
                   </Typography>
                 </Grid>
-                
+
                 <Grid item xs={12}>
                   <Typography variant="subtitle2" color="text.secondary">Description</Typography>
-                  <Typography variant="body1" paragraph>
+                  <Typography variant="body1" component="p">
                     {selectedLeave.description || 'No description provided.'}
                   </Typography>
                 </Grid>
-                
+
                 {selectedLeave.documentUrl && (
                   <Grid item xs={12}>
                     <Typography variant="subtitle2" color="text.secondary">Supporting Document</Typography>
@@ -273,7 +273,7 @@ const LeaveList = ({ type }) => {
                     </Button>
                   </Grid>
                 )}
-                
+
                 {selectedLeave.comments && (
                   <Grid item xs={12}>
                     <Typography variant="subtitle2" color="text.secondary">Comments</Typography>
@@ -282,7 +282,7 @@ const LeaveList = ({ type }) => {
                     </Typography>
                   </Grid>
                 )}
-                
+
                 {(type === 'proctor' || type === 'hod') && selectedLeave.status === 'Pending' && (
                   <Grid item xs={12}>
                     <Box sx={{ mt: 2 }}>
@@ -297,7 +297,7 @@ const LeaveList = ({ type }) => {
                         variant="outlined"
                         onChange={(e) => setComments({ ...comments, [selectedLeave._id]: e.target.value })}
                       />
-                      
+
                       {type === 'hod' && selectedLeave.isFacultyLeave && (
                         <FormControl fullWidth sx={{ mt: 2 }}>
                           <InputLabel>Select Substitute Proctor</InputLabel>
@@ -322,7 +322,7 @@ const LeaveList = ({ type }) => {
                 )}
               </Grid>
             </DialogContent>
-            
+
             {(type === 'proctor' || type === 'hod') && selectedLeave.status === 'Pending' && (
               <DialogActions sx={{ p: 2, justifyContent: 'flex-end' }}>
                 <Button
