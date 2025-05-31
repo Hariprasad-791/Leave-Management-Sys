@@ -12,9 +12,6 @@
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch"
   },
-  "jest": {
-    "testEnvironment": "jsdom"
-  },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",

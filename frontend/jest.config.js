@@ -8,8 +8,15 @@ module.exports = {
     'src/**/*.{js,jsx}',
     '!src/index.js',
     '!src/reportWebVitals.js',
+    '!src/setupTests.js',
+    '!src/**/*.test.{js,jsx}',
+    '!src/**/__tests__/**',
   ],
-  testEnvironmentOptions: {
-    customExportConditions: [''],
-  },
+  coverageReporters: ['text', 'lcov', 'html'],
+  testTimeout: 10000,
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true,
+  verbose: false,
+  silent: true,
 };
