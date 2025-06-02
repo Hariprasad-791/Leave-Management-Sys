@@ -7,10 +7,10 @@
 "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "jest --passWithNoTests --forceExit",
+    "test": "jest --passWithNoTests",
     "test:watch": "jest --watch --passWithNoTests",
-    "test:coverage": "jest --coverage --watchAll=false --passWithNoTests --forceExit",
-    "test:ci": "jest --coverage --watchAll=false --ci --passWithNoTests --forceExit"
+    "test:coverage": "jest --coverage --watchAll=false --passWithNoTests",
+    "test:ci": "jest --coverage --watchAll=false --ci --passWithNoTests --collectCoverageFrom='src/**/*.{js,jsx}' --collectCoverageFrom='!src/**/*.test.{js,jsx}'"
   }
 ,
   "dependencies": {

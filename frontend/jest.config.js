@@ -1,7 +1,7 @@
 module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
-  moduleNameMapping: {  // Fixed: was moduleNameMapping
+  moduleNameMapping: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
   },
   collectCoverage: true,
@@ -32,7 +32,4 @@ module.exports = {
   },
   moduleFileExtensions: ['js', 'jsx', 'json'],
   testPathIgnorePatterns: ['/node_modules/', '/build/'],
-  resetMocks: false,
-  restoreMocks: true,
-  forceExit: true,
 };
