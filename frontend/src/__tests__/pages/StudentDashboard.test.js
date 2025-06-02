@@ -1,25 +1,25 @@
+import React from 'react';
 import { render } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import { BrowserRouter } from 'react-router-dom';
+import StudentDashboard from '../../pages/StudentDashboard';
 
-// Create a simple mock component instead of importing the real one
-const MockStudentDashboard = () => (
-  <div data-testid="student-dashboard">
-    <h1>Student Dashboard</h1>
-    <div data-testid="stats">
-      <div>Total Leaves: 10</div>
-      <div>Pending: 2</div>
-    </div>
-  </div>
+jest.mock('../../utils/api', () => ({
+  get: jest.fn(() => Promise.resolve({ data: [] })),
+}));
+
+jest.mock('../../utils/auth', () => ({
+  getRole: jest.fn(() => 'Student'),
+}));
+
+const MockedStudentDashboard = () => (
+  <BrowserRouter>
+    <StudentDashboard />
+  </BrowserRouter>
 );
 
 describe('StudentDashboard Component', () => {
   test('renders student dashboard', () => {
-    render(<MockStudentDashboard />);
-    expect(document.querySelector('[data-testid="student-dashboard"]')).toBeInTheDocument();
-  });
-
-  test('contains dashboard elements', () => {
-    const { container } = render(<MockStudentDashboard />);
-    expect(container.firstChild).toBeTruthy();
+    render(<MockedStudentDashboard />);
+    expect(document.body).toBeInTheDocument();
   });
 });

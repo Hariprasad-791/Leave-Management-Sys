@@ -1,20 +1,22 @@
+import React from 'react';
 import { render } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import { BrowserRouter } from 'react-router-dom';
+import DashboardLayout from '../../components/DashboardLayout';
 
-const MockDashboardLayout = ({ children }) => (
-  <div data-testid="dashboard-layout">
-    <header>Dashboard Header</header>
-    <main>{children}</main>
-  </div>
+jest.mock('../../utils/auth', () => ({
+  getRole: jest.fn(() => 'Student'),
+  removeToken: jest.fn(),
+}));
+
+const MockedDashboardLayout = ({ children }) => (
+  <BrowserRouter>
+    <DashboardLayout>{children}</DashboardLayout>
+  </BrowserRouter>
 );
 
 describe('DashboardLayout Component', () => {
-  test('renders with children', () => {
-    render(
-      <MockDashboardLayout>
-        <div>Test Content</div>
-      </MockDashboardLayout>
-    );
-    expect(document.querySelector('[data-testid="dashboard-layout"]')).toBeInTheDocument();
+  test('renders dashboard layout', () => {
+    render(<MockedDashboardLayout><div>Test Content</div></MockedDashboardLayout>);
+    expect(document.body).toBeInTheDocument();
   });
 });

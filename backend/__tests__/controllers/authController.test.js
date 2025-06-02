@@ -1,250 +1,136 @@
-// Mock-only test without database dependencies
-describe('Auth Controller Coverage Tests', () => {
-  // Mock request and response objects
-  const mockReq = {
-    body: {},
-    params: {},
-    query: {},
-    user: {}
-  };
+import request from 'supertest';
+import express from 'express';
+import { login, signup } from '../../controllers/authController.js';
+import User from '../../models/User.js';
+import bcrypt from 'bcryptjs';
 
-  const mockRes = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn().mockReturnThis(),
-    send: jest.fn().mockReturnThis(),
-    cookie: jest.fn().mockReturnThis(),
-    clearCookie: jest.fn().mockReturnThis()
-  };
+jest.mock('../../models/User.js');
+jest.mock('bcryptjs');
 
+const app = express();
+app.use(express.json());
+app.post('/login', login);
+app.post('/signup', signup);
+
+describe('Auth Controller', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockReq.body = {};
   });
 
-  describe('Login Controller Logic', () => {
-    test('should handle successful login flow', () => {
-      // Mock login function
-      const mockLogin = (req, res) => {
-        if (req.body.email && req.body.password) {
-          res.status(200).json({ 
-            success: true, 
-            message: 'Login successful',
-            token: 'mock-jwt-token'
-          });
-        } else {
-          res.status(400).json({ 
-            success: false, 
-            message: 'Email and password required' 
-          });
-        }
-      };
+  describe('POST /login', () => {
+    test('should login admin successfully', async () => {
+      const res = await request(app)
+        .post('/login')
+        .send({ email: 'admin', password: 'admin123' });
 
-      // Test successful login
-      mockReq.body = { email: 'test@test.com', password: 'password123' };
-      mockLogin(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: true,
-        message: 'Login successful',
-        token: 'mock-jwt-token'
-      });
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('token');
     });
 
-    test('should handle login validation errors', () => {
-      const mockLogin = (req, res) => {
-        if (!req.body.email || !req.body.password) {
-          res.status(400).json({ 
-            success: false, 
-            message: 'Email and password required' 
-          });
-        }
+    test('should login regular user successfully', async () => {
+      const mockUser = {
+        _id: 'user123',
+        email: 'test@example.com',
+        password: 'hashedpassword',
+        role: 'Student'
       };
 
-      // Test missing credentials
-      mockReq.body = {};
-      mockLogin(mockReq, mockRes);
+      User.findOne.mockResolvedValue(mockUser);
+      bcrypt.compare.mockResolvedValue(true);
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: false,
-        message: 'Email and password required'
-      });
+      const res = await request(app)
+        .post('/login')
+        .send({ email: 'test@example.com', password: 'password123' });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('token');
     });
 
-    test('should handle server errors', () => {
-      const mockLogin = (req, res) => {
-        try {
-          throw new Error('Database connection failed');
-        } catch (error) {
-          res.status(500).json({ 
-            success: false, 
-            message: 'Server error' 
-          });
-        }
+    test('should return 400 for invalid credentials', async () => {
+      User.findOne.mockResolvedValue(null);
+
+      const res = await request(app)
+        .post('/login')
+        .send({ email: 'wrong@example.com', password: 'wrongpassword' });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Invalid credentials');
+    });
+
+    test('should return 400 for wrong password', async () => {
+      const mockUser = {
+        _id: 'user123',
+        email: 'test@example.com',
+        password: 'hashedpassword',
+        role: 'Student'
       };
 
-      mockLogin(mockReq, mockRes);
+      User.findOne.mockResolvedValue(mockUser);
+      bcrypt.compare.mockResolvedValue(false);
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: false,
-        message: 'Server error'
-      });
+      const res = await request(app)
+        .post('/login')
+        .send({ email: 'test@example.com', password: 'wrongpassword' });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('Invalid credentials');
     });
   });
 
-  describe('Register Controller Logic', () => {
-    test('should handle successful registration', () => {
-      const mockRegister = (req, res) => {
-        if (req.body.email && req.body.password && req.body.name) {
-          res.status(201).json({ 
-            success: true, 
-            message: 'User registered successfully',
-            user: { id: 1, email: req.body.email, name: req.body.name }
-          });
-        } else {
-          res.status(400).json({ 
-            success: false, 
-            message: 'Missing required fields' 
-          });
-        }
-      };
+  describe('POST /signup', () => {
+    test('should create user successfully', async () => {
+      User.findOne.mockResolvedValue(null);
+      bcrypt.hash.mockResolvedValue('hashedpassword');
+      User.prototype.save = jest.fn().mockResolvedValue();
 
-      mockReq.body = { 
-        email: 'newuser@test.com', 
-        password: 'password123',
-        name: 'Test User'
-      };
-      mockRegister(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: true,
-        message: 'User registered successfully',
-        user: { id: 1, email: 'newuser@test.com', name: 'Test User' }
-      });
-    });
-
-    test('should handle registration validation', () => {
-      const mockRegister = (req, res) => {
-        if (!req.body.email) {
-          res.status(400).json({ 
-            success: false, 
-            message: 'Email is required' 
-          });
-        }
-      };
-
-      mockReq.body = { password: 'password123' };
-      mockRegister(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-    });
-  });
-
-  describe('Logout Controller Logic', () => {
-    test('should handle logout successfully', () => {
-      const mockLogout = (req, res) => {
-        res.clearCookie('token');
-        res.status(200).json({ 
-          success: true, 
-          message: 'Logout successful' 
+      const res = await request(app)
+        .post('/signup')
+        .send({
+          name: 'Test User',
+          email: 'test@example.com',
+          password: 'password123',
+          role: 'Student',
+          department: 'CSE'
         });
-      };
 
-      mockLogout(mockReq, mockRes);
-
-      expect(mockRes.clearCookie).toHaveBeenCalledWith('token');
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: true,
-        message: 'Logout successful'
-      });
-    });
-  });
-
-  describe('Profile Controller Logic', () => {
-    test('should get user profile', () => {
-      const mockGetProfile = (req, res) => {
-        if (req.user && req.user.id) {
-          res.status(200).json({ 
-            success: true, 
-            user: req.user 
-          });
-        } else {
-          res.status(401).json({ 
-            success: false, 
-            message: 'Unauthorized' 
-          });
-        }
-      };
-
-      mockReq.user = { id: 1, email: 'test@test.com', name: 'Test User' };
-      mockGetProfile(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: true,
-        user: { id: 1, email: 'test@test.com', name: 'Test User' }
-      });
+      expect(res.statusCode).toBe(201);
+      expect(res.body.message).toBe('User created successfully');
     });
 
-    test('should handle unauthorized access', () => {
-      const mockGetProfile = (req, res) => {
-        if (!req.user) {
-          res.status(401).json({ 
-            success: false, 
-            message: 'Unauthorized' 
-          });
-        }
-      };
+    test('should return 400 if user already exists', async () => {
+      User.findOne.mockResolvedValue({ email: 'test@example.com' });
 
-      mockReq.user = null;
-      mockGetProfile(mockReq, mockRes);
+      const res = await request(app)
+        .post('/signup')
+        .send({
+          name: 'Test User',
+          email: 'test@example.com',
+          password: 'password123',
+          role: 'Student',
+          department: 'CSE'
+        });
 
-      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('User already exists');
+    });
+
+    test('should prevent multiple HODs in same department', async () => {
+      User.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ role: 'HOD', department: 'CSE' });
+
+      const res = await request(app)
+        .post('/signup')
+        .send({
+          name: 'Test HOD',
+          email: 'hod@example.com',
+          password: 'password123',
+          role: 'HOD',
+          department: 'CSE'
+        });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toBe('A HOD already exists for this department.');
     });
   });
-
-describe('Utility Functions', () => {
-  test('should validate email format', () => {
-    const isValidEmail = (email) => {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(email);
-    };
-
-    expect(isValidEmail('test@test.com')).toBe(true);
-    expect(isValidEmail('invalid-email')).toBe(false);
-    expect(isValidEmail('')).toBe(false);
-  });
-
-  test('should validate password strength', () => {
-    const isValidPassword = (password) => {
-      return Boolean(password) && password.length >= 6;
-    };
-
-    expect(isValidPassword('password123')).toBe(true);
-    expect(isValidPassword('123')).toBe(false);
-    expect(isValidPassword('')).toBe(false);
-    expect(isValidPassword(null)).toBe(false);
-    expect(isValidPassword(undefined)).toBe(false);
-  });
-
-  test('should handle error messages', () => {
-    const formatError = (error) => {
-      return {
-        success: false,
-        message: error.message || 'An error occurred'
-      };
-    };
-
-    const testError = new Error('Test error');
-    const result = formatError(testError);
-
-    expect(result.success).toBe(false);
-    expect(result.message).toBe('Test error');
-  });
-});
-
 });

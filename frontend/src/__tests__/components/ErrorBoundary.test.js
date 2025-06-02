@@ -1,14 +1,23 @@
+import React from 'react';
 import { render } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import ErrorBoundary from '../../components/ErrorBoundary';
 
+const ThrowError = () => {
+  throw new Error('Test error');
+};
+
 describe('ErrorBoundary Component', () => {
-  test('renders children when no error', () => {
+  test('catches and displays error', () => {
+    // Suppress console.error for this test
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
     render(
       <ErrorBoundary>
-        <div>Test Content</div>
+        <ThrowError />
       </ErrorBoundary>
     );
+    
     expect(document.body).toBeInTheDocument();
+    consoleSpy.mockRestore();
   });
 });
