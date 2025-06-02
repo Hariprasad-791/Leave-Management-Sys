@@ -107,7 +107,7 @@ function Login() {
             Welcome Back
           </Typography>
           <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-            Sign in to access your dashboard
+            Sign in to access your dashboard hari
           </Typography>
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

@@ -7,11 +7,16 @@ WORKDIR /app/frontend
 # Copy frontend package files
 COPY frontend/package*.json ./
 
-# Install dependencies
+# Install dependencies (including dev dependencies for testing)
 RUN npm ci
 
-# Copy frontend source and build
+# Copy frontend source
 COPY frontend/ ./
+
+# Run frontend tests with coverage
+RUN npm run test:ci
+
+# Build frontend for production
 RUN npm run build
 
 # Backend stage
@@ -23,11 +28,17 @@ WORKDIR /app/backend
 # Copy backend package files
 COPY backend/package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for testing)
+RUN npm ci
 
 # Copy backend source
 COPY backend/ ./
+
+# Run backend tests with coverage
+RUN npm run test:ci
+
+# Install only production dependencies
+RUN npm ci --only=production && npm cache clean --force
 
 # Production stage
 FROM node:18-alpine AS production
@@ -42,11 +53,15 @@ RUN apk add --no-cache curl
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy backend from build stage
+# Copy backend from build stage (production dependencies only)
 COPY --from=backend-build --chown=nodejs:nodejs /app/backend ./
 
 # Copy frontend build from build stage
 COPY --from=frontend-build --chown=nodejs:nodejs /app/frontend/build ./frontend_build
+
+# Copy test coverage reports (optional - for debugging)
+COPY --from=frontend-build --chown=nodejs:nodejs /app/frontend/coverage ./frontend_coverage
+COPY --from=backend-build --chown=nodejs:nodejs /app/backend/coverage ./backend_coverage
 
 # Switch to non-root user
 USER nodejs
