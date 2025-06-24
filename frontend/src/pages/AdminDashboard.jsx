@@ -1,16 +1,23 @@
-import React from 'react';
-import { 
-  Container, Typography, Box, Paper, Grid, 
-  Card, CardContent, Divider 
+import React, { useState } from 'react';
+import {
+  Container, Typography, Box, Paper, Grid,
+  Card, CardContent, Divider, Tabs, Tab
 } from '@mui/material';
-import { 
-  Person, School, SupervisorAccount, 
-  Engineering
+import {
+  Person, School, SupervisorAccount,
+  Engineering, Group, Settings
 } from '@mui/icons-material';
 import Navbar from '../components/Navbar';
 import Signup from '../components/Signup';
+import UserManagement from '../components/UserManagement';
 
 function AdminDashboard() {
+  const [tabValue, setTabValue] = useState(0);
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar />
@@ -78,18 +85,41 @@ function AdminDashboard() {
           </Grid>
         </Grid>
         
-        <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
-          <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600, color: 'primary.main', mb: 3 }}>
-            Create New User
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-          <Signup />
+        <Paper elevation={3} sx={{ borderRadius: 2 }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange} 
+            variant="fullWidth"
+            indicatorColor="primary"
+            textColor="primary"
+          >
+            <Tab icon={<Group />} label="User Management" />
+            <Tab icon={<Person />} label="Create User" />
+          </Tabs>
+          
+          {tabValue === 0 && (
+            <Box sx={{ p: 3 }}>
+              <UserManagement />
+            </Box>
+          )}
+          
+          {tabValue === 1 && (
+            <Box sx={{ p: 3 }}>
+              <Typography variant="h5" component="h2" gutterBottom sx={{ 
+                fontWeight: 600, color: 'primary.main', mb: 3 
+              }}>
+                Create New User
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+              <Signup />
+            </Box>
+          )}
         </Paper>
       </Container>
-      
+
       <Box component="footer" sx={{ py: 3, px: 2, mt: 'auto', bgcolor: 'background.paper' }}>
         <Typography variant="body2" color="text.secondary" align="center">
-           {new Date().getFullYear()} Leave Management System
+          © {new Date().getFullYear()} Leave Management System
         </Typography>
       </Box>
     </Box>

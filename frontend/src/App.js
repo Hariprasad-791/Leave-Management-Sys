@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { createTheme, ThemeProvider, responsiveFontSizes } from '@mui/material/styles';
+import { AuthProvider } from './context/AuthContext'; // Add this import
 import Login from './components/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import StudentDashboard from './pages/StudentDashboard';
@@ -51,15 +52,17 @@ theme = responsiveFontSizes(theme);
 function App() {
   return (
     <ThemeProvider theme={theme}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/student" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
-          <Route path="/faculty" element={<ProtectedRoute><FacultyDashboard /></ProtectedRoute>} />
-          <Route path="/hod" element={<ProtectedRoute><HodDashboard /></ProtectedRoute>} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider> {/* Wrap everything with AuthProvider */}
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/student" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
+            <Route path="/faculty" element={<ProtectedRoute><FacultyDashboard /></ProtectedRoute>} />
+            <Route path="/hod" element={<ProtectedRoute><HodDashboard /></ProtectedRoute>} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider> {/* Close AuthProvider */}
     </ThemeProvider>
   );
 }

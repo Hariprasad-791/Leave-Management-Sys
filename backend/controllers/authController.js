@@ -2,32 +2,25 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-// ✅ Middleware to protect routes
-export const protect = (req, res, next) => {
-  const token = req.headers?.authorization?.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ message: 'Not authorized, token missing' });
-  }
-
+// Get current user details
+export const getCurrentUser = async (req, res) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.userId = decoded.userId;
-    req.role = decoded.role;
-
-    next(); // Proceed to next middleware
+    const user = await User.findById(req.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ user });
   } catch (error) {
-    console.error('JWT verification failed:', error.message);
-    return res.status(401).json({ message: 'Not authorized, token invalid' });
+    console.error('Error fetching current user:', error);
+    res.status(500).json({ message: 'Server error while fetching user details' });
   }
 };
 
-// ✅ Login (Admin or regular user)
+// Login function (existing)
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
-  // ✅ Hardcoded admin login
+  // Hardcoded admin login
   if (email === 'admin' && password === 'admin123') {
     const token = jwt.sign(
       { userId: 'admin', role: 'Admin' },
@@ -57,7 +50,7 @@ export const login = async (req, res) => {
   }
 };
 
-// ✅ Signup (Admin-only, unique HOD per department)
+// Signup function (existing)
 export const signup = async (req, res) => {
   const { name, email, password, role, department } = req.body;
 
@@ -67,7 +60,7 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // ✅ Ensure one HOD per department
+    // Ensure one HOD per department
     if (role === 'HOD') {
       const existingHod = await User.findOne({ role: 'HOD', department });
       if (existingHod) {

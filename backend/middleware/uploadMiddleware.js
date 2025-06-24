@@ -1,11 +1,9 @@
 import dotenv from 'dotenv';
-dotenv.config();
-
-
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
+dotenv.config();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
@@ -13,20 +11,22 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_SECRET,
 });
 
-
-const storage = new CloudinaryStorage({
+// Storage for documents (PDFs)
+const documentStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'leave-docs',
-    resource_type: 'raw', // ✅ Upload as raw to support PDF
-    allowed_formats: ['pdf'], // ✅ Restrict to PDF only
-    public_id: (req, file) => `${Date.now()}-${file.originalname}`, // optional: custom filename
+    resource_type: 'raw',
+    allowed_formats: ['pdf'],
+    public_id: (req, file) => `${Date.now()}-${file.originalname}`,
   },
 });
 
+// Memory storage for Excel files (for processing)
+const excelStorage = multer.memoryStorage();
 
-// Optional: Multer filter to reject non-PDFs before uploading
-const fileFilter = (req, file, cb) => {
+// File filters
+const documentFilter = (req, file, cb) => {
   if (file.mimetype === 'application/pdf') {
     cb(null, true);
   } else {
@@ -34,8 +34,21 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+const excelFilter = (req, file, cb) => {
+  const allowedMimes = [
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ];
+  if (allowedMimes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only Excel files (.xls, .xlsx) are allowed!'), false);
+  }
+};
 
-const upload = multer({ storage, fileFilter });
+// Export different upload configurations
+export const uploadDocument = multer({ storage: documentStorage, fileFilter: documentFilter });
+export const uploadExcel = multer({ storage: excelStorage, fileFilter: excelFilter });
 
-
-export default upload;
+// Default export for backward compatibility
+export default uploadDocument;

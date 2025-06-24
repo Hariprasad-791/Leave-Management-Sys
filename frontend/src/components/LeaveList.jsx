@@ -16,9 +16,7 @@ import PropTypes from 'prop-types';
 
 const LeaveList = ({ type }) => {
   const [leaves, setLeaves] = useState([]);
-  const [faculties, setFaculties] = useState([]);
   const [comments, setComments] = useState({});
-  const [subs, setSubs] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -26,25 +24,17 @@ const LeaveList = ({ type }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [refreshing, setRefreshing] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchLeaves = async () => {
     setLoading(true);
     try {
       let url = '/leave/status';
       if (type === 'proctor') url = '/leave/proctor';
-      else if (type === 'hod') url = '/leave/department';
+      else if (type === 'hod') url = '/leave/hod'; // Fixed to use correct HOD endpoint
 
       const res = await API.get(url);
       setLeaves(res.data);
-
-      if (type === 'hod') {
-        const facultyRes = await API.get('/users');
-        // Filter out faculty who are currently on leave
-        const facultyList = facultyRes.data.filter(u => {
-          return u.role === 'Faculty' && !u.isInLeave;
-        });
-        setFaculties(facultyList);
-      }
       setError(null);
     } catch (error) {
       console.error('Error fetching leaves', error);
@@ -64,38 +54,52 @@ const LeaveList = ({ type }) => {
     setRefreshing(false);
   };
 
-  const handleAction = async (leaveId, action) => {
+  // Updated HOD action handler - removed substitute proctor logic
+  const handleHODAction = async (leaveId, action) => {
     try {
+      setActionLoading(true);
+      
+      const payload = {
+        action: action, // 'Approved' or 'Rejected'
+        comments: comments[leaveId] || ''
+      };
+
+      await API.put(`/leave/${leaveId}/hod-action`, payload);
+
+      // Refresh the leave list
+      await fetchLeaves();
+      setOpenDialog(false);
+      setComments({});
+      
+    } catch (err) {
+      setError(err.response?.data?.message || 'Action failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Legacy action handler for proctor approval
+  const handleProctorAction = async (leaveId, action) => {
+    try {
+      setActionLoading(true);
+      
       const payload = {
         leaveId,
         approvalStatus: action,
-        comments: comments[leaveId] || '',
-        substituteProctorId: subs[leaveId] || null,
+        comments: comments[leaveId] || ''
       };
-
-      // Validate if substitute proctor is required but not selected
-      if (type === 'hod' &&
-        leaves.find(l => l._id === leaveId)?.isFacultyLeave &&
-        action === 'Approved' &&
-        !subs[leaveId]) {
-        setError('Please select a substitute proctor for faculty leave');
-        return;
-      }
 
       await API.post('/leave/approve', payload);
 
-      // Refresh the leave list instead of full page reload
-      const updatedLeaves = leaves.map(leave => {
-        if (leave._id === leaveId) {
-          return { ...leave, status: action };
-        }
-        return leave;
-      });
-      setLeaves(updatedLeaves);
+      // Refresh the leave list
+      await fetchLeaves();
       setOpenDialog(false);
+      setComments({});
 
     } catch (err) {
       setError(err.response?.data?.message || 'Action failed');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -110,6 +114,12 @@ const LeaveList = ({ type }) => {
         return <Chip label="Approved" color="success" size="small" icon={<CheckCircle />} />;
       case 'Rejected':
         return <Chip label="Rejected" color="error" size="small" icon={<Cancel />} />;
+      case 'Pending_HOD':
+        return <Chip label="Pending HOD" color="warning" size="small" />;
+      case 'Pending_Substitution':
+        return <Chip label="Pending Substitution" color="info" size="small" />;
+      case 'Draft':
+        return <Chip label="Draft" color="default" size="small" />;
       case 'Pending':
         return <Chip label="Pending" color="warning" size="small" />;
       default:
@@ -124,6 +134,19 @@ const LeaveList = ({ type }) => {
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Invalid Date';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Invalid Date';
+    }
   };
 
   if (loading && !refreshing) return (
@@ -156,7 +179,8 @@ const LeaveList = ({ type }) => {
             <Table sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell><Typography variant="subtitle2">Title</Typography></TableCell>
+                  <TableCell><Typography variant="subtitle2">Type</Typography></TableCell>
+                  <TableCell><Typography variant="subtitle2">Applicant</Typography></TableCell>
                   <TableCell><Typography variant="subtitle2">From</Typography></TableCell>
                   <TableCell><Typography variant="subtitle2">To</Typography></TableCell>
                   <TableCell><Typography variant="subtitle2">Status</Typography></TableCell>
@@ -168,9 +192,10 @@ const LeaveList = ({ type }) => {
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((leave) => (
                     <TableRow key={leave._id} hover>
-                      <TableCell>{leave.title}</TableCell>
-                      <TableCell>{new Date(leave.fromDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{new Date(leave.toDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{leave.type || 'N/A'}</TableCell>
+                      <TableCell>{leave.user?.name || 'N/A'}</TableCell>
+                      <TableCell>{formatDate(leave.startDate)}</TableCell>
+                      <TableCell>{formatDate(leave.endDate)}</TableCell>
                       <TableCell>{getStatusChip(leave.status)}</TableCell>
                       <TableCell>
                         <Tooltip title="View Details">
@@ -211,7 +236,7 @@ const LeaveList = ({ type }) => {
         {selectedLeave && (
           <>
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h6">{selectedLeave.title}</Typography>
+              <Typography variant="h6">{selectedLeave.type || 'Leave Request'}</Typography>
               <IconButton onClick={() => setOpenDialog(false)}>
                 <Close />
               </IconButton>
@@ -221,29 +246,29 @@ const LeaveList = ({ type }) => {
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle2" color="text.secondary">Requester</Typography>
                   <Typography variant="body1" gutterBottom>
-                    {selectedLeave.student?.name || 'N/A'} ({selectedLeave.student?.role || 'N/A'})
+                    {selectedLeave.user?.name || 'N/A'} ({selectedLeave.user?.role || 'N/A'})
                   </Typography>
 
                   <Typography variant="subtitle2" color="text.secondary">Email</Typography>
                   <Typography variant="body1" gutterBottom>
-                    {selectedLeave.student?.email || 'N/A'}
+                    {selectedLeave.user?.email || 'N/A'}
                   </Typography>
 
                   <Typography variant="subtitle2" color="text.secondary">Department</Typography>
                   <Typography variant="body1" gutterBottom>
-                    {selectedLeave.department || 'N/A'}
+                    {selectedLeave.user?.department || 'N/A'}
                   </Typography>
                 </Grid>
 
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle2" color="text.secondary">From Date</Typography>
                   <Typography variant="body1" gutterBottom>
-                    {new Date(selectedLeave.fromDate).toLocaleDateString()}
+                    {formatDate(selectedLeave.startDate)}
                   </Typography>
 
                   <Typography variant="subtitle2" color="text.secondary">To Date</Typography>
                   <Typography variant="body1" gutterBottom>
-                    {new Date(selectedLeave.toDate).toLocaleDateString()}
+                    {formatDate(selectedLeave.endDate)}
                   </Typography>
 
                   <Typography variant="subtitle2" color="text.secondary">Status</Typography>
@@ -253,20 +278,20 @@ const LeaveList = ({ type }) => {
                 </Grid>
 
                 <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="text.secondary">Description</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">Reason</Typography>
                   <Typography variant="body1" component="p">
-                    {selectedLeave.description || 'No description provided.'}
+                    {selectedLeave.reason || 'No reason provided.'}
                   </Typography>
                 </Grid>
 
-                {selectedLeave.documentUrl && (
+                {selectedLeave.document && (
                   <Grid item xs={12}>
                     <Typography variant="subtitle2" color="text.secondary">Supporting Document</Typography>
                     <Button
                       variant="outlined"
                       startIcon={<Assignment />}
                       size="small"
-                      onClick={() => window.open(selectedLeave.documentUrl, '_blank', 'noopener, noreferrer')}
+                      onClick={() => window.open(selectedLeave.document, '_blank', 'noopener, noreferrer')}
                       sx={{ mt: 1 }}
                     >
                       View Document
@@ -274,16 +299,45 @@ const LeaveList = ({ type }) => {
                   </Grid>
                 )}
 
-                {selectedLeave.comments && (
+                {/* Show substitutions if any */}
+                {selectedLeave.substitutions && selectedLeave.substitutions.length > 0 && (
                   <Grid item xs={12}>
-                    <Typography variant="subtitle2" color="text.secondary">Comments</Typography>
+                    <Typography variant="subtitle2" color="text.secondary">Substitutions Arranged</Typography>
+                    <Box sx={{ mt: 1 }}>
+                      {selectedLeave.substitutions.map((sub, index) => (
+                        <Box key={index} sx={{ mb: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
+                          <Typography variant="body2">
+                            <strong>{formatDate(sub.date)}</strong> - {sub.timeSlot} - {sub.subject} ({sub.classroom})
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Substitute: {sub.substituteTeacher?.name || 'Not assigned'} - Status: {sub.status}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Grid>
+                )}
+
+                {selectedLeave.hodComments && (
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="text.secondary">HOD Comments</Typography>
                     <Typography variant="body1">
-                      {selectedLeave.comments}
+                      {selectedLeave.hodComments}
                     </Typography>
                   </Grid>
                 )}
 
-                {(type === 'proctor' || type === 'hod') && selectedLeave.status === 'Pending' && (
+                {selectedLeave.proctorComments && (
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="text.secondary">Proctor Comments</Typography>
+                    <Typography variant="body1">
+                      {selectedLeave.proctorComments}
+                    </Typography>
+                  </Grid>
+                )}
+
+                {/* Action section for HOD - REMOVED substitute proctor field */}
+                {type === 'hod' && (selectedLeave.status === 'Pending_HOD' || selectedLeave.status === 'Pending') && (
                   <Grid item xs={12}>
                     <Box sx={{ mt: 2 }}>
                       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -295,51 +349,79 @@ const LeaveList = ({ type }) => {
                         rows={3}
                         placeholder="Add your comments here..."
                         variant="outlined"
+                        value={comments[selectedLeave._id] || ''}
                         onChange={(e) => setComments({ ...comments, [selectedLeave._id]: e.target.value })}
                       />
+                    </Box>
+                  </Grid>
+                )}
 
-                      {type === 'hod' && selectedLeave.isFacultyLeave && (
-                        <FormControl fullWidth sx={{ mt: 2 }}>
-                          <InputLabel>Select Substitute Proctor</InputLabel>
-                          <Select
-                            value={subs[selectedLeave._id] || ''}
-                            onChange={(e) => setSubs({ ...subs, [selectedLeave._id]: e.target.value })}
-                            label="Select Substitute Proctor"
-                          >
-                            <MenuItem value="">
-                              <em>Select a faculty</em>
-                            </MenuItem>
-                            {faculties.map(fac => (
-                              <MenuItem key={fac._id} value={fac._id}>
-                                {fac.name} - {fac.email}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      )}
+                {/* Action section for Proctor */}
+                {type === 'proctor' && selectedLeave.status === 'Pending' && (
+                  <Grid item xs={12}>
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Add Comments
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={3}
+                        placeholder="Add your comments here..."
+                        variant="outlined"
+                        value={comments[selectedLeave._id] || ''}
+                        onChange={(e) => setComments({ ...comments, [selectedLeave._id]: e.target.value })}
+                      />
                     </Box>
                   </Grid>
                 )}
               </Grid>
             </DialogContent>
 
-            {(type === 'proctor' || type === 'hod') && selectedLeave.status === 'Pending' && (
+            {/* Action buttons for HOD - SIMPLIFIED */}
+            {type === 'hod' && (selectedLeave.status === 'Pending_HOD' || selectedLeave.status === 'Pending') && (
               <DialogActions sx={{ p: 2, justifyContent: 'flex-end' }}>
                 <Button
                   variant="outlined"
                   color="error"
-                  onClick={() => handleAction(selectedLeave._id, 'Rejected')}
+                  onClick={() => handleHODAction(selectedLeave._id, 'Rejected')}
                   startIcon={<Cancel />}
+                  disabled={actionLoading}
                 >
                   Reject
                 </Button>
                 <Button
                   variant="contained"
                   color="success"
-                  onClick={() => handleAction(selectedLeave._id, 'Approved')}
+                  onClick={() => handleHODAction(selectedLeave._id, 'Approved')}
                   startIcon={<CheckCircle />}
+                  disabled={actionLoading}
                 >
-                  Approve
+                  {actionLoading ? <CircularProgress size={20} /> : 'Approve'}
+                </Button>
+              </DialogActions>
+            )}
+
+            {/* Action buttons for Proctor */}
+            {type === 'proctor' && selectedLeave.status === 'Pending' && (
+              <DialogActions sx={{ p: 2, justifyContent: 'flex-end' }}>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => handleProctorAction(selectedLeave._id, 'Rejected')}
+                  startIcon={<Cancel />}
+                  disabled={actionLoading}
+                >
+                  Reject
+                </Button>
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={() => handleProctorAction(selectedLeave._id, 'Approved')}
+                  startIcon={<CheckCircle />}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? <CircularProgress size={20} /> : 'Approve'}
                 </Button>
               </DialogActions>
             )}
@@ -349,7 +431,9 @@ const LeaveList = ({ type }) => {
     </Paper>
   );
 };
+
 LeaveList.propTypes = {
-  type: PropTypes.string.isRequired, // or PropTypes.oneOf([...]) if you know the valid types
+  type: PropTypes.string.isRequired,
 };
+
 export default LeaveList;

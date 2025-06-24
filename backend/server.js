@@ -12,6 +12,8 @@ import userRoutes from './routes/userRoutes.js';
 import leaveRoutes from './routes/leaveRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import { revertSubstituteProctors } from './controllers/leaveController.js';
+import timetableRoutes from './routes/timetableRoutes.js';
+import substitutionRoutes from './routes/substitutionRoutes.js';
 
 dotenv.config();
 
@@ -45,11 +47,11 @@ app.get('/health', (req, res) => {
     });
 });
 
-// API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
 app.use('/api/leave', leaveRoutes);
-app.use('/api/upload', uploadRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/timetable', timetableRoutes);
+app.use('/api/substitution', substitutionRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

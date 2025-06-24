@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import {
+  TextField, Button, Select, MenuItem, FormControl,
+  InputLabel, Alert, Box, Grid, CircularProgress
+} from '@mui/material';
 import API from '../utils/api';
 
 function Signup() {
@@ -11,17 +15,29 @@ function Signup() {
   });
 
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const departments = ['CSE', 'ISE', 'ECE', 'ME', 'CE'];
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError('');
+    setSuccess('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!form.name || !form.email || !form.password || !form.department) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
     try {
+      setLoading(true);
       await API.post('/auth/signup', form);
-      alert('User created successfully!');
+      setSuccess('User created successfully!');
       setForm({
         name: '',
         email: '',
@@ -30,61 +46,91 @@ function Signup() {
         department: '',
       });
     } catch (err) {
-      const msg =
-        err.response?.data?.message || 'Error occurred while creating user.';
+      const msg = err.response?.data?.message || 'Error occurred while creating user.';
       setError(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Admin: Create User</h2>
+    <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 600, mx: 'auto' }}>
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      <input
-        name="name"
-        placeholder="Name"
-        value={form.name}
-        onChange={handleChange}
-        required
-      />
-      <input
-        name="email"
-        placeholder="Email"
-        value={form.email}
-        onChange={handleChange}
-        required
-      />
-      <input
-        name="password"
-        placeholder="Password"
-        type="password"
-        value={form.password}
-        onChange={handleChange}
-        required
-      />
-
-      <select name="role" value={form.role} onChange={handleChange}>
-        <option value="Student">Student</option>
-        <option value="Faculty">Faculty</option>
-        <option value="HOD">HOD</option>
-      </select>
-
-      <select
-        name="department"
-        value={form.department}
-        onChange={handleChange}
-        required
-      >
-        <option value="">Select Department</option>
-        <option value="CSE">CSE</option>
-        <option value="ISE">ISE</option>
-        <option value="ECE">ECE</option>
-      </select>
-
-      <button type="submit">Create</button>
-    </form>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            name="name"
+            label="Full Name"
+            value={form.name}
+            onChange={handleChange}
+            fullWidth
+            required
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            name="email"
+            label="Email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+            fullWidth
+            required
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            name="password"
+            label="Password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+            fullWidth
+            required
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel>Role</InputLabel>
+            <Select name="role" value={form.role} onChange={handleChange} label="Role">
+              <MenuItem value="Student">Student</MenuItem>
+              <MenuItem value="Faculty">Faculty</MenuItem>
+              <MenuItem value="HOD">HOD</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12}>
+          <FormControl fullWidth>
+            <InputLabel>Department</InputLabel>
+            <Select
+              name="department"
+              value={form.department}
+              onChange={handleChange}
+              label="Department"
+              required
+            >
+              {departments.map((dept) => (
+                <MenuItem key={dept} value={dept}>{dept}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12}>
+          <Button
+            type="submit"
+            variant="contained"
+            fullWidth
+            disabled={loading}
+            startIcon={loading && <CircularProgress size={20} />}
+            sx={{ py: 1.5 }}
+          >
+            {loading ? 'Creating...' : 'Create User'}
+          </Button>
+        </Grid>
+      </Grid>
+    </Box>
   );
 }
 

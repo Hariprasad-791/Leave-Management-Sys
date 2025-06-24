@@ -1,32 +1,11 @@
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
-// ✅ Removed unused `User` import
-
-// Middleware to protect routes using Bearer token in Authorization header
-export const authMiddleware = (req, res, next) => {
-  const token = req.headers?.authorization?.split(' ')[1]; // ✅ Uses optional chaining
+export const protect = async (req, res, next) => {
+  const token = req.headers?.authorization?.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ message: 'Authorization denied' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.id;
-    req.role = decoded.role;
-    next();
-  } catch {
-    // ✅ No variable if not used, cleaner handling
-    return res.status(401).json({ message: 'Invalid token' });
-  }
-};
-
-// Duplicate protection middleware (can be refactored into one with authMiddleware)
-export const protect = (req, res, next) => {
-  const token = req.headers?.authorization?.split(' ')[1]; // ✅ Optional chaining
-
-  if (!token) {
-    return res.status(401).json({ message: 'Not authorized' });
+    return res.status(401).json({ message: 'Not authorized, token missing' });
   }
 
   try {
@@ -34,16 +13,22 @@ export const protect = (req, res, next) => {
     req.userId = decoded.userId;
     req.role = decoded.role;
     next();
-  } catch {
-    return res.status(401).json({ message: 'Invalid token' });
+  } catch (error) {
+    console.error('JWT verification failed:', error.message);
+    return res.status(401).json({ message: 'Not authorized, token invalid' });
   }
 };
 
-// Role-based access middleware for HOD
-export const isHOD = (req, res, next) => {
-  if (req.role === 'HOD') {
-    next();
-  } else {
-    res.status(403).json({ message: 'Only HODs can access this' });
+export const isAdmin = (req, res, next) => {
+  if (req.role !== 'Admin') {
+    return res.status(403).json({ message: 'Admin access required' });
   }
+  next();
+};
+
+export const isHOD = (req, res, next) => {
+  if (req.role !== 'HOD') {
+    return res.status(403).json({ message: 'HOD access required' });
+  }
+  next();
 };

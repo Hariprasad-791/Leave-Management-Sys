@@ -4,24 +4,26 @@
   "private": true,
   "description": "Leave Management System Frontend in React",
   "main": "src/index.js",
-"scripts": {
+  "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch --passWithNoTests",
     "test:coverage": "jest --coverage --watchAll=false --passWithNoTests",
     "test:ci": "jest --coverage --watchAll=false --ci --passWithNoTests --collectCoverageFrom='src/**/*.{js,jsx}' --collectCoverageFrom='!src/**/*.test.{js,jsx}'"
-  }
-,
+  },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^7.1.0",
+    "@mui/x-date-pickers": "^8.5.2",
     "axios": "^1.6.0",
+    "date-fns": "^4.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "xlsx": "^0.18.5"
   },
   "browserslist": {
     "production": [
