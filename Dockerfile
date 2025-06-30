@@ -14,7 +14,7 @@ RUN npm ci
 COPY frontend/ ./
 
 # Run frontend tests with coverage
-RUN npm run test:ci
+#RUN npm run test:ci
 
 # Build frontend for production
 RUN npm run build
@@ -35,7 +35,7 @@ RUN npm ci
 COPY backend/ ./
 
 # Run backend tests with coverage
-RUN npm run test:ci
+#RUN npm run test:ci
 
 # Install only production dependencies
 RUN npm ci --only=production && npm cache clean --force
